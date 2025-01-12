@@ -44,5 +44,6 @@ class VacationManagementSystem:
 
 
 if __name__ == "__main__":
+
     system = VacationManagementSystem()
     system.run()

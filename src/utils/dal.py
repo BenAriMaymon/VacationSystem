@@ -1,4 +1,10 @@
 import mysql.connector
+from mysql.connector import Error
+from typing import Dict, List, Optional, Any
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class DAL:
@@ -14,22 +20,12 @@ class DAL:
         """
         try:
             self.connection = mysql.connector.connect(
-                host="localhost",  # שרת מקומי על המחשב שלך
-                # אפשרויות נוספות: IP או דומיין של שרת מרוחק
-                # למשל: "123.45.67.89" או "db.example.com"
-
-                user="root",  #  MySQL הוא המשתמש בעל ההרשאות הגבוהות ביותר במערכת :
-
-                password="123456",  # סיסמת ההתחברות
-                # בסביבת ייצור מומלץ לשמור בקובץ הגדרות נפרד או משתנה סביבה
-
-                database="project10",  # שם מסד הנתונים
-                # יש ליצור את מסד הנתונים מראש עם:
-                # CREATE DATABASE project2;
-
-                autocommit=True  # כל פעולה תתבצע מיד על בסיס הנתונים
+                host=os.getenv('DB_HOST', 'localhost'),
+                database=os.getenv('DB_NAME', 'vacation_system'),
+                user=os.getenv('DB_USER', 'root'),
+                password=os.getenv('DB_PASSWORD', '036320884'),
+                autocommit=True
             )
-
         except mysql.connector.Error as err:
             print(f"Error connecting to database: {err}")
             self.connection = None
@@ -37,65 +33,50 @@ class DAL:
     def _validate_query_params(self, query, params):
         """
         בדיקת תקינות הפרמטרים של השאילתה
-        מוודא שהשאילתה היא מחרוזת והפרמטרים הם tuple או None
         """
         if not isinstance(query, str):
             raise ValueError("Query must be a string.")
         if params is not None and not isinstance(params, tuple):
             raise ValueError("Params must be a tuple or None.")
 
-    def _execute_query(self, query, params=None, fetchall=False, fetchone=False):
+    def _execute_query(self, query: str, params: tuple = None, fetchall: bool = False, fetchone: bool = False):
         """
         הרצת שאילתה עם אפשרויות שונות לקבלת התוצאות
-        fetchall - מחזיר את כל התוצאות
-        fetchone - מחזיר שורה אחת בלבד
         """
         self._validate_query_params(query, params)
         if self.connection:
             try:
                 with self.connection.cursor(dictionary=True) as cursor:
-                    print(f"Executing query: {query}")
-                    if params:
-                        print(f"With parameters: {params}")
                     cursor.execute(query, params)
                     if fetchall:
-                        result = cursor.fetchall()
-                        print(f"Fetched {len(result)} rows")
-                        return result
+                        return cursor.fetchall()
                     elif fetchone:
-                        result = cursor.fetchone()
-                        print("Fetched one row")
-                        return result
+                        return cursor.fetchone()
                     else:
-                        print(f"Query affected {cursor.rowcount} rows")
-                    return cursor
+                        return cursor.rowcount
             except mysql.connector.Error as err:
                 print(f"Error executing query: {err}")
         return None
 
-    def get_table(self, query, params=None):
+    def get_table(self, query: str, params: tuple = None) -> List[Dict[str, Any]]:
         """שליפת כל השורות מטבלה"""
         return self._execute_query(query, params, fetchall=True)
 
-    def get_scalar(self, query, params=None):
+    def get_scalar(self, query: str, params: tuple = None) -> Any:
         """שליפת ערך בודד (שורה אחת)"""
         return self._execute_query(query, params, fetchone=True)
 
-    def insert(self, query, params=None):
+    def insert(self, query: str, params: tuple = None):
         """הוספת נתונים לטבלה"""
         return self._execute_query(query, params)
 
-    def update(self, query, params=None):
+    def update(self, query: str, params: tuple = None):
         """עדכון נתונים בטבלה"""
         return self._execute_query(query, params)
 
-    def delete(self, query, params=None):
+    def delete(self, query: str, params: tuple = None):
         """מחיקת נתונים מטבלה"""
         return self._execute_query(query, params)
-
-    def get_one(self, query, params=None):
-        """שליפת רשומה בודדת"""
-        return self._execute_query(query, params, fetchone=True)
 
     def close(self):
         """סגירת החיבור לבסיס הנתונים"""
@@ -103,83 +84,134 @@ class DAL:
             self.connection.close()
 
     def __enter__(self):
-        """
-        מתודה זו מופעלת בתחילת בלוק ה-with
-        נקראת כאשר נכנסים לבלוק with DAL() as dal
-        מחזירה את האובייקט שיוקצה למשתנה אחרי ה-as
-        """
+        """בלוק ה-with"""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """
-        מתודה זו מופעלת בסיום בלוק ה-with
-        נקראת אוטומטית כשיוצאים מהבלוק, גם במקרה של שגיאה
-
-        הפרמטרים:
-        exc_type: סוג השגיאה (אם הייתה)
-        exc_val: ערך השגיאה
-        exc_tb: מידע על מיקום השגיאה
-        """
-
+        """סיום בלוק ה-with"""
         if self.connection:
-            self.close()  # סגירת החיבור לבסיס הנתונים
+            self.close()
             print("Connection Closed!")
 
 
-# דוגמת שימוש
+# User operations
+class UserDAL(DAL):
+
+    def create_user(self, user_data: Dict) -> int:
+        query = """
+        INSERT INTO users (firstname, lastname, email, password, date_of_birth, role)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        params = (
+            user_data['firstname'],
+            user_data['lastname'],
+            user_data['email'],
+            user_data['password'],
+            user_data['date_of_birth'],
+            user_data.get('role', 1)  # Default to regular user role
+        )
+        return self.insert(query, params)
+
+    def get_user_by_email(self, email: str) -> Optional[Dict]:
+        query = "SELECT * FROM users WHERE email = %s"
+        result = self.get_scalar(query, (email,))
+        return result
+
+    def get_user_by_id(self, user_id: int) -> Optional[Dict]:
+        query = "SELECT * FROM users WHERE user_id = %s"
+        result = self.get_scalar(query, (user_id,))
+        return result
+
+
+# Vacation operations
+class VacationDAL(DAL):
+
+    def create_vacation(self, vacation_data: Dict) -> int:
+        query = """
+        INSERT INTO vacations (vacation_title, country, start_date, end_date, price, img_url)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        params = (
+            vacation_data['vacation_title'],
+            vacation_data['country'],
+            vacation_data['start_date'],
+            vacation_data['end_date'],
+            vacation_data['price'],
+            vacation_data.get('img_url')
+        )
+        return self.insert(query, params)
+
+    def update_vacation(self, vacation_id: int, vacation_data: Dict) -> None:
+        query = """
+        UPDATE vacations
+        SET vacation_title = %s, country = %s, start_date = %s, end_date = %s, 
+            price = %s, img_url = %s
+        WHERE vacation_id = %s
+        """
+        params = (
+            vacation_data['vacation_title'],
+            vacation_data['country'],
+            vacation_data['start_date'],
+            vacation_data['end_date'],
+            vacation_data['price'],
+            vacation_data.get('img_url'),
+            vacation_id
+        )
+        self.update(query, params)
+
+    def delete_vacation(self, vacation_id: int) -> None:
+        query = "DELETE FROM vacations WHERE vacation_id = %s"
+        self.delete(query, (vacation_id,))
+
+    def get_all_vacations(self) -> List[Dict]:
+        query = """
+        SELECT v.*, c.country_name, COUNT(l.like_id) as total_likes 
+        FROM vacations v 
+        LEFT JOIN likes l ON v.vacation_id = l.vacation_id 
+        JOIN countries c ON v.country = c.country_id 
+        GROUP BY v.vacation_id
+        """
+        return self.get_table(query)
+
+    def get_vacation_by_id(self, vacation_id: int) -> Optional[Dict]:
+        query = """
+        SELECT v.*, c.country_name, COUNT(l.like_id) as total_likes 
+        FROM vacations v 
+        LEFT JOIN likes l ON v.vacation_id = l.vacation_id 
+        JOIN countries c ON v.country = c.country_id 
+        WHERE v.vacation_id = %s
+        GROUP BY v.vacation_id
+        """
+        result = self.get_scalar(query, (vacation_id,))
+        return result
+
+
+# Example Usage
 if __name__ == '__main__':
     with DAL() as dal:
-        # דוגמאות ל-get_table
-        print("\n=== get_table examples ===")
-        countries = dal.get_table("SELECT * FROM countries")
-        users = dal.get_table("SELECT * FROM users WHERE age > %s", (25,))
+        # Example for vacation CRUD
+        vacation_data = {
+            'vacation_title': 'Beach Paradise',
+            'country': 1,  # Country ID
+            'start_date': '2025-01-01',
+            'end_date': '2025-01-14',
+            'price': 1000
+        }
+        vacation_id = dal.create_vacation(vacation_data)
+        print(f"Vacation created with ID: {vacation_id}")
 
-        for country in countries:
-            print(f"country name: {country["name"]}, Population: {
-                  country["population"]}")
-        for user in users:
-            print(f"User name:{user['name']}, Age:{user["age"]}")
+        vacations = dal.get_all_vacations()
+        for vacation in vacations:
+            print(f"Vacation title: {vacation['vacation_title']}, Country: {vacation['country_name']}")
 
-        # # דוגמאות ל-get_scalar
-        # print("\n=== get_scalar examples ===")
-        # count = dal.get_scalar("SELECT COUNT(*) as count FROM users")
-        # max_age = dal.get_scalar("SELECT MAX(age) as max_age FROM users")
-
-        # # דוגמאות ל-get_one
-        # print("\n=== get_one examples ===")
-        # user = dal.get_one("SELECT * FROM users WHERE id = %s", (1,))
-        # country = dal.get_one(
-        #     "SELECT * FROM countries WHERE name = %s", ('Israel',))
-
-        # # דוגמאות ל-insert
-        # print("\n=== insert examples ===")
-        # dal.insert(
-        #     "INSERT INTO users (name, email, age) VALUES (%s, %s, %s)",
-        #     ('Johnny1', 'johnny1@example.com', 35)
-        # )
-        # dal.insert(
-        #     "INSERT INTO countries (name, code) VALUES (%s, %s)",
-        #     ('Brazil', 'BR')
-        # )
-
-        # # דוגמאות ל-update
-        # print("\n=== update examples ===")
-        # dal.update(
-        #     "UPDATE users SET age = %s WHERE id = %s",
-        #     (31, 1)
-        # )
-        # dal.update(
-        #     "UPDATE countries SET population = %s WHERE code = %s",
-        #     (67000000, 'FR')
-        # )
-
-        # # דוגמאות ל-delete
-        # print("\n=== delete examples ===")
-        # dal.delete(
-        #     "DELETE FROM users WHERE id = %s",
-        #     (1,)
-        # )
-        # dal.delete(
-        #     "DELETE FROM countries WHERE code = %s",
-        #     ('FR',)
-        # )
+        # User operations
+        user_data = {
+            'firstname': 'John',
+            'lastname': 'Doe',
+            'email': 'john.doe@example.com',
+            'password': 'password123',
+            'date_of_birth': '1990-01-01'
+        }
+        user_dal = UserDAL()
+        user_id = user_dal.create_user(user_data)
+        print(f"User created with ID: {user_id}")

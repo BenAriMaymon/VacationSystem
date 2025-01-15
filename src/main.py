@@ -5,6 +5,7 @@ from logic.like_logic import LikeLogic
 from facade.system_facade import SystemFacade
 
 class VacationManagementSystem:
+
     def __init__(self):
         self.dal = DAL()
         self.user_logic = UserLogic(self.dal)

@@ -3,6 +3,7 @@ from logic.user_logic import UserLogic
 from logic.vacation_logic import VacationLogic
 from logic.like_logic import LikeLogic
 from facade.system_facade import SystemFacade
+
 class VacationManagementSystem:
     def __init__(self):
         self.dal = DAL()
@@ -10,6 +11,7 @@ class VacationManagementSystem:
         self.vacation_logic = VacationLogic(self.dal)
         self.like_logic = LikeLogic(self.dal)
         self.facade = SystemFacade(self.user_logic, self.vacation_logic, self.like_logic, self.dal)
+
     def display_menu(self):
         if not self.facade.current_user:
             print("\n- Vacation Management System -")
@@ -31,6 +33,7 @@ class VacationManagementSystem:
                 print("2. View My Liked Vacations")
                 print("3. Like/Unlike Vacation")
                 print("4. Logout")
+
     def register(self):
         print("\n- Register New User -")
         try:
@@ -46,6 +49,7 @@ class VacationManagementSystem:
             print("Registration successful! Please login.")
         except ValueError as e:
             print(f"Error: {e}")
+
     def login(self):
         print("\n- Login -")
         try:
@@ -55,6 +59,7 @@ class VacationManagementSystem:
             print("Login successful!")
         except ValueError as e:
             print(f"Error: {e}")
+
     def add_vacation(self):
         print("\n- Add New Vacation -")
         try:
@@ -75,6 +80,7 @@ class VacationManagementSystem:
             print("Vacation added successfully!")
         except ValueError as e:
             print(f"Error: {e}")
+
     def view_vacations(self):
         print("\n- All Vacations -")
         try:
@@ -88,6 +94,7 @@ class VacationManagementSystem:
                 print(f"Likes: {vacation['total_likes']}")
         except ValueError as e:
             print(f"Error: {e}")
+
     def handle_likes(self):
         print("\n- Like/Unlike Vacation -")
         try:
@@ -103,6 +110,7 @@ class VacationManagementSystem:
                 print("Invalid action")
         except ValueError as e:
             print(f"Error: {e}")
+
     def view_liked_vacations(self):
         print("\n- My Liked Vacations -")
         try:
@@ -117,6 +125,7 @@ class VacationManagementSystem:
                 print(f"Price: ${vacation['price']}")
         except ValueError as e:
             print(f"Error: {e}")
+
     def edit_vacation(self):
         print("\n- Edit Vacation -")
         try:
@@ -145,6 +154,7 @@ class VacationManagementSystem:
             print("Vacation updated successfully!")
         except ValueError as e:
             print(f"Error: {e}")
+
     def delete_vacation(self):
         print("\n- Delete Vacation -")
         try:
@@ -157,6 +167,7 @@ class VacationManagementSystem:
                 print("Deletion cancelled")
         except ValueError as e:
             print(f"Error: {e}")
+
     def run(self):
         while True:
             self.display_menu()
@@ -193,6 +204,7 @@ class VacationManagementSystem:
                     elif choice == '4':
                         self.facade.logout()
                         print("Logged out successfully!")
+
 if __name__ == "__main__":
     system = VacationManagementSystem()
     system.run()

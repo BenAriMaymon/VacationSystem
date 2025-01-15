@@ -24,7 +24,7 @@ class UserLogic:
 """
     def validate_password(self, password):
 
-        special_characters = "!@#$%^&*()_+-=\|?><~"
+        special_characters = "!@#$%^&*()_+-=?><~"
 
         if len(password) < 6:
             raise ValueError("Password must be at least 6 characters long")

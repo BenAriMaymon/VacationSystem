@@ -2,7 +2,7 @@
 import bcrypt
 
 class SystemFacade:
-    def _init_(self, user_logic, vacation_logic, like_logic, dal):
+    def __init__(self, user_logic, vacation_logic, like_logic, dal):
         self.user_logic = user_logic
         self.vacation_logic = vacation_logic
         self.like_logic = like_logic

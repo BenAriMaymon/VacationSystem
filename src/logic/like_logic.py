@@ -1,6 +1,6 @@
 
 class LikeLogic:
-    def _init_(self, dal):
+    def __init__(self, dal):
         self.dal = dal
         ""
 

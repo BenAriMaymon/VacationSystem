@@ -25,6 +25,20 @@ class SystemFacade:
         if self._current_user.get('role') != 2:
             raise ValueError("Unauthorized: Admin access required")
         "בודק האם המשתמש מנהל "
+    def validate_email(self,email):
+        return self.user_logic.validate_email(email)
+
+    def validate_password(self,password):
+        return self.user_logic.validate_password(password)
+
+    def validate_date_of_birth(self, date_of_birth):
+        return self.user_logic.validate_date_of_birth(date_of_birth)
+
+    def validate_dates(self, start_date, end_date):
+        return self.vacation_logic.validate_dates(start_date, end_date)
+
+    def validate_price(self, price):
+        return self.vacation_logic.validate_price(price)
 
     def register_user(self, user_data):
         self.user_logic.validate_user_data(user_data)

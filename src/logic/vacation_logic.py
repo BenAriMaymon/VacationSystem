@@ -32,7 +32,6 @@ class VacationLogic:
             if str(e) in ["Start date must be in the future", "End date must be after start date"]:
                 raise
             raise ValueError("Invalid date format. Use YYYY-MM-DD")
-
     """
     ולידציה של מחיר החופשה
      אם המחיר הוא ערך מספרי חוקי
